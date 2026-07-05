@@ -1,8 +1,8 @@
 # MovieInsight — 开发文档
 
 > 全栈电影数据发现与分析平台  
-> 版本：v1.0 MVP  
-> 审核状态：⏳ 待审核
+> 版本：v1.1 MVP  
+> 审核状态：✅ 已审核
 
 ---
 
@@ -21,6 +21,7 @@
 | ORM | SQLAlchemy | 2.0 | Flask 生态标配 |
 | 数据库 | SQLite | — | 零配置，自动建表，clone 即跑 |
 | 测试框架 | pytest + pytest-flask | 8.x | Python 生态主流 |
+| HTML 解析 | BeautifulSoup4 + lxml | 4.x + 5.x | 豆瓣页面解析 |
 | 环境管理 | python-dotenv | 1.x | .env 文件管理 TMDB API Key |
 
 ### 1.2 不使用的技术（及原因）
@@ -56,7 +57,8 @@
 │   │   └── database.py       # Movie + Credit 模型（SQLAlchemy）
 │   ├── services/
 │   │   ├── __init__.py
-│   │   └── tmdb_service.py   # TMDB API 封装类
+│   │   ├── tmdb_service.py   # TMDB API 封装类
+│   │   └── douban_service.py # 豆瓣 Top 250 爬虫
 │   ├── api/
 │   │   ├── __init__.py
 │   │   ├── movies.py         # /api/movies, /api/genres, /api/years, /api/countries
@@ -96,15 +98,18 @@
 ```sql
 CREATE TABLE movies (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    tmdb_id             INTEGER UNIQUE NOT NULL,
-    title               VARCHAR(255) NOT NULL,      -- 中文标题
+    source              VARCHAR(16) DEFAULT 'tmdb',  -- 'tmdb' | 'douban'
+    tmdb_id             INTEGER,                     -- TMDB 唯一标识（豆瓣数据为 NULL）
+    douban_id           INTEGER,                     -- 豆瓣电影 ID（TMDB 数据为 NULL）
+    title               VARCHAR(255) NOT NULL,       -- 中文标题
     original_title      VARCHAR(255) DEFAULT '',     -- 原始标题
     overview            TEXT DEFAULT '',             -- 中文剧情简介
     poster_path         VARCHAR(255) DEFAULT '',     -- 海报路径
     backdrop_path       VARCHAR(255) DEFAULT '',     -- 背景图路径
     release_date        VARCHAR(10) DEFAULT '',      -- YYYY-MM-DD
     runtime             INTEGER,                     -- 片长（分钟）
-    vote_average        REAL DEFAULT 0.0,            -- TMDB 10分制评分
+    vote_average        REAL DEFAULT 0.0,            -- TMDB/豆瓣 10分制评分
+    douban_rating       REAL,                        -- 豆瓣评分（仅豆瓣数据源有值）
     vote_count          INTEGER DEFAULT 0,
     popularity          REAL DEFAULT 0.0,
     budget              INTEGER,                     -- 美元
@@ -136,14 +141,15 @@ CREATE TABLE credits (
 
 ### 3.2 索引
 
-- `movies.tmdb_id` UNIQUE — 去重
+- `movies.tmdb_id` — TMDB 去重查询
+- `movies.douban_id` — 豆瓣去重查询
 - `credits.movie_id` — 查询电影演职表时走索引
 
 ### 3.3 为什么用 SQLite
 
 - 零配置，`db.create_all()` 自动建表
 - clone 下来 `python app.py` 就能跑
-- 300 条数据 + 3000 条演职记录，SQLite 查全表 < 10ms
+- ~450 条数据 + ~4000 条演职记录，SQLite 查全表 < 10ms
 - 不需要安装 MySQL 服务
 
 ---
@@ -200,7 +206,7 @@ CREATE TABLE credits (
 
 #### GET /api/stats
 
-**返回的 3 组数据**：
+**返回的数据**（v1.1 更新）：
 
 1. **rating_distribution**：评分分布
    - `SELECT ROUND(vote_average, 1), COUNT(*) FROM movies WHERE vote_count > 0 GROUP BY ROUND(vote_average, 1) ORDER BY ROUND(vote_average, 1)`
@@ -213,6 +219,10 @@ CREATE TABLE credits (
 3. **yearly_trend**：年代趋势
    - `SELECT SUBSTR(release_date, 1, 4), COUNT(*), AVG(vote_average) FROM movies WHERE release_date != '' GROUP BY SUBSTR(release_date, 1, 4) ORDER BY SUBSTR(release_date, 1, 4)`
    - 前端画折线图（X 轴年份，Y 轴电影数量）
+
+4. **source_distribution**：数据来源占比（v1.1 新增）
+   - `SELECT source, COUNT(*) FROM movies GROUP BY source`
+   - Dashboard 展示 TMDB / 豆瓣数据量占比
 
 #### GET /api/genres, /api/years, /api/countries
 
@@ -283,18 +293,37 @@ Usage: python seed.py
 流程：
 1. 从 .env 读取 TMDB_API_KEY
 2. 调用 TMDB API 获取流行电影 8 页 + 高分电影 5 页
-3. 去重（按 tmdb_id）
-4. 逐部获取完整详情（含 credits）
-5. 写入 SQLite
-6. 打印统计结果
+3. 爬取豆瓣 Top 250（10 页 × 25 部）
+4. TMDB 内部去重（按 tmdb_id），豆瓣内部去重（按 douban_id）
+5. 两源合并去重（按标题相似度匹配）
+6. 逐部获取 TMDB 完整详情（含 credits）
+7. 豆瓣数据直接写入（无演职人员信息）
+8. 写入 SQLite
+9. 打印统计结果
 """
 ```
 
-**关键细节**：
+**TMDB 关键细节**：
 - 每两次 API 调用间隔 0.3 秒（避免触发速率限制）
 - 已存在的 tmdb_id 跳过（幂等，可重复执行）
 - 异常不中断流程（某部电影详情获取失败则跳过，记录日志）
-- 预计耗时：~260 部 × 0.6 秒/部 ≈ 2.6 分钟
+
+**豆瓣爬虫关键细节**：
+- 请求间隔 2 秒（避免触发反爬机制）
+- 设置 User-Agent 模拟浏览器访问
+- 解析每部电影的：标题、原名、评分、评价人数、简介、类型、海报 URL
+- 豆瓣无演职人员数据（仅 TMDB 电影有 credits）
+- 豆瓣数据 source='douban'，tmdb_id 为 NULL
+
+**去重策略**：
+- 同源去重：tmdb_id / douban_id
+- 跨源去重：标题相似度 > 90% 视为同一部电影，优先保留 TMDB 数据（字段更全）
+- 预计最终数据量：400-480 部
+
+**预计耗时**：
+- TMDB 部分：~260 部 × 0.6 秒 ≈ 2.6 分钟
+- 豆瓣部分：250 部 × 2 秒 ≈ 8.3 分钟
+- 总计约 **10-12 分钟**
 
 ---
 
@@ -327,10 +356,18 @@ App.vue
 | 页面 | 触发时机 | 调用 |
 |------|----------|------|
 | 发现页 | mounted + 筛选条件变化 | `fetchMovies(params)` + `fetchGenres()` + `fetchYears()` + `fetchCountries()` |
-| 详情页 | mounted | `fetchMovie(id)` |
+| 详情页 | mounted + route.params.id 变化 | `fetchMovie(id)` |
 | 分析页 | mounted | `fetchStats()` |
 
 **说明**：不使用 Pinia/Vuex，因为数据来自 API 实时请求，没有跨页面共享状态的需求。筛选条件用 Discover.vue 的 reactive state 管理。
+
+### 7.4 数据来源标识（v1.1 新增）
+
+电影卡片和详情页显示数据来源标签：
+- TMDB 来源：蓝色标签 "TMDB"
+- 豆瓣来源：绿色标签 "豆瓣"
+- 双源合并：两个标签并排显示
+- 豆瓣电影无演职人员信息，详情页演职表区域显示"暂无演职人员数据"
 
 ### 7.3 海报懒加载
 
@@ -468,8 +505,10 @@ conftest.py 预置 3 部电影（内存 SQLite）：
 | 风险 | 可能性 | 应对 |
 |------|--------|------|
 | TMDB API 在中国大陆被墙 | 高 | 需要科学上网环境，README 中说明 |
+| 豆瓣反爬虫封 IP | 中 | 请求间隔 2 秒 + User-Agent 模拟浏览器 + 异常重试 |
+| 豆瓣页面结构变更 | 中 | 选择器用 class + 层级组合，避免绝对路径 |
 | API Key 注册需要手机验证 | 中 | 可能需要 Google 账号，提前确认 |
-| 种子脚本运行太慢 | 低 | 260 部约 2.6 分钟，可接受 |
+| 种子脚本运行太慢 | 低 | 总计约 10-12 分钟，可接受 |
 | Element Plus 版本不兼容 | 低 | 锁定 package.json 版本号 |
 | ECharts 暗色主题位移 | 低 | 手动配置颜色，不依赖默认主题 |
 
