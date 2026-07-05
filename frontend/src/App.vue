@@ -24,9 +24,9 @@
       <router-view />
     </div>
     <footer class="app-footer">
-      <span>数据来源：<a href="https://www.themoviedb.org/" target="_blank">TMDB</a></span>
+      <span>数据来源：<a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a></span>
       <span>·</span>
-      <a href="https://github.com/Poki-cbq/MovieInsight" target="_blank">GitHub</a>
+      <a href="https://github.com/Poki-cbq/MovieInsight" target="_blank" rel="noopener noreferrer">GitHub</a>
     </footer>
   </div>
 </template>

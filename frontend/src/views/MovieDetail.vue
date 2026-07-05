@@ -141,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowLeft, VideoCamera, User } from "@element-plus/icons-vue";
 import { fetchMovieDetail } from "../api";
@@ -224,6 +224,17 @@ const tableData = computed(() => [...directors.value, ...actors.value]);
 onMounted(() => {
   loadDetail();
 });
+
+// 监听路由参数变化：同一组件内从 /movie/1 跳转到 /movie/2 时重新加载
+watch(
+  () => route.params.id,
+  (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      posterFailed.value = false;
+      loadDetail();
+    }
+  }
+);
 </script>
 
 <style scoped>

@@ -201,10 +201,13 @@ function toStarRating(voteAverage) {
 const failedImages = reactive(new Set());
 
 // ---------------------------------------------------------------------------
-// 数据请求
+// 竞态保护：记录最新请求 id，丢弃过时响应
 // ---------------------------------------------------------------------------
+let requestSeq = 0;
+
 async function loadMovies() {
   loading.value = true;
+  const seq = ++requestSeq;
   try {
     const params = {};
     if (filters.page > 1) params.page = filters.page;
@@ -218,13 +221,17 @@ async function loadMovies() {
     if (filters.search) params.search = filters.search;
 
     const res = await fetchMovies(params);
+    // 丢弃过期响应
+    if (seq !== requestSeq) return;
     movies.value = res.data.data;
     total.value = res.data.total;
     totalPages.value = res.data.total_pages;
   } catch {
     // 错误提示由 axios 拦截器统一处理
   } finally {
-    loading.value = false;
+    if (seq === requestSeq) {
+      loading.value = false;
+    }
   }
 }
 

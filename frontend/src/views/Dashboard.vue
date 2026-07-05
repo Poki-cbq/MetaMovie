@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
 import { fetchStats } from "../api";
 
@@ -94,6 +94,7 @@ const DARK_COLORS = [
 // ECharts 初始化工具
 // ---------------------------------------------------------------------------
 function makeChart(domRef) {
+  if (!domRef) return null;
   const chart = echarts.init(domRef, "dark");
   chart.setOption({
     backgroundColor: "#1a1a2e",
@@ -103,6 +104,7 @@ function makeChart(domRef) {
 }
 
 function buildRatingChart(data) {
+  if (!ratingChart || !data?.length) return;
   ratingChart.setOption({
     tooltip: {
       trigger: "axis",
@@ -133,8 +135,9 @@ function buildRatingChart(data) {
 }
 
 function buildGenreChart(data) {
+  if (!genreChart || !data?.length) return;
   const top12 = data.slice(0, 12);
-  ratingChart.setOption({
+  genreChart.setOption({
     tooltip: {
       trigger: "item",
       formatter: (p) => `${p.name}<br/>${p.value} 部 · 均分 ${top12[p.dataIndex].avg_rating}`,
@@ -161,6 +164,7 @@ function buildGenreChart(data) {
 }
 
 function buildYearChart(data) {
+  if (!yearChart || !data?.length) return;
   yearChart.setOption({
     tooltip: {
       trigger: "axis",
