@@ -1,5 +1,5 @@
 """
-MovieInsight 数据初始化脚本
+MetaMovie 数据初始化脚本
 
 用法：
     cd backend
@@ -31,7 +31,7 @@ def main():
         sys.exit(1)
 
     print("=" * 50)
-    print("  MovieInsight — 数据初始化 (v1.1)")
+    print("  MetaMovie — 数据初始化 (v1.1)")
     print("  TMDB + 豆瓣 Top 250 双数据源")
     print("=" * 50)
 

@@ -6,7 +6,7 @@ load_dotenv()
 
 class Config:
     """Flask 应用配置"""
-    SECRET_KEY = os.getenv("SECRET_KEY", "movie-insight-dev-key")
+    SECRET_KEY = os.getenv("SECRET_KEY", "metamovie-dev-key")
     TMDB_API_KEY = os.getenv("TMDB_API_KEY", "")
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",

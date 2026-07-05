@@ -1,6 +1,6 @@
 <template>
   <div class="app-sidebar">
-    <div class="logo">🎬 MovieInsight</div>
+    <div class="logo">🎬 MetaMovie</div>
     <el-menu
       :default-active="activeMenu"
       router
@@ -26,7 +26,7 @@
     <footer class="app-footer">
       <span>数据来源：<a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a> · <a href="https://movie.douban.com/top250" target="_blank" rel="noopener noreferrer">豆瓣</a></span>
       <span>·</span>
-      <a href="https://github.com/Poki-cbq/MovieInsight" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://github.com/Poki-cbq/MetaMovie" target="_blank" rel="noopener noreferrer">GitHub</a>
     </footer>
   </div>
 </template>

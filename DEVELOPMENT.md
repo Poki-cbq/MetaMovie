@@ -1,4 +1,4 @@
-# MovieInsight — 开发文档
+# MetaMovie — 开发文档
 
 > 全栈电影数据发现与分析平台  
 > 版本：v1.1 MVP  

@@ -1,6 +1,6 @@
-# 🎬 MovieInsight
+# 🎬 MetaMovie
 
-> 全栈电影数据发现与分析平台 — 基于 TMDB API 的 Vue 3 + Flask 全栈项目
+> 全栈电影数据发现与分析平台 — 基于 TMDB API + 豆瓣 Top 250 的 Vue 3 + Flask 全栈项目
 
 [![Vue 3](https://img.shields.io/badge/Vue-3.5-4FC08D?logo=vue.js)](https://vuejs.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1-000000?logo=flask)](https://flask.palletsprojects.com/)
@@ -18,10 +18,10 @@
 
 | 功能 | 描述 |
 |------|------|
-| 🔍 电影发现 | 按类型/年份/国家/评分/热度筛选，关键词搜索 |
-| 📊 数据分析 | 3 张 ECharts 图表：评分分布直方图 + 类型饼图 + 年代趋势折线图 |
-| 🎥 电影详情 | 海报大图 + 基本信息 + 剧情简介 + 演职表 |
-| 📄 分页浏览 | 传统分页，20 条/页 |
+| 🔍 电影发现 | 按类型/年份/国家/评分/热度筛选，关键词搜索，TMDB/豆瓣双源标识 |
+| 📊 数据分析 | 4 组数据：评分分布直方图 + 类型饼图 + 年代趋势折线图 + 数据来源占比 |
+| 🎥 电影详情 | 海报大图 + 基本信息 + 剧情简介 + 演职表（豆瓣数据标注豆瓣评分） |
+| 📄 双数据源 | TMDB 热门+高分电影 + 豆瓣 Top 250，跨源去重合并 400+ 部 |
 | 🎨 TMDB 风格 | TMDB 深蓝/浅蓝配色，暗色数据看板 |
 
 ## 🚀 快速开始
@@ -35,8 +35,8 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/Poki-cbq/MovieInsight.git
-cd MovieInsight
+git clone https://github.com/Poki-cbq/MetaMovie.git
+cd MetaMovie
 ```
 
 ### 2. 后端
@@ -58,7 +58,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # 编辑 .env，填入你的 TMDB_API_KEY
 
-# 初始化数据（从 TMDB 拉取约 200-260 部电影，约 2-3 分钟）
+# 初始化数据（TMDB ~260 部 + 豆瓣 250 部，跨源去重后约 400-480 部，约 10-12 分钟）
 python seed.py
 
 # 启动后端（默认 http://localhost:5000）
@@ -92,6 +92,7 @@ npm run dev
 | 后端框架 | Flask 3.1 |
 | ORM | SQLAlchemy 2.0 |
 | 数据库 | SQLite |
+| 爬虫 | BeautifulSoup4 + lxml |
 | 测试 | pytest |
 
 ## 📡 API
@@ -123,21 +124,23 @@ npm run dev
 ## 📁 项目结构
 
 ```
-MovieInsight/
+MetaMovie/
 ├── README.md
 ├── REQUIREMENTS.md          # 需求文档
 ├── DEVELOPMENT.md           # 开发文档
 ├── backend/
 │   ├── app.py               # Flask 入口
 │   ├── config.py            # 配置
-│   ├── seed.py              # 数据初始化脚本
+│   ├── seed.py              # 数据初始化脚本（TMDB + 豆瓣）
 │   ├── models/database.py   # SQLAlchemy 模型
-│   ├── services/tmdb_service.py
+│   ├── services/
+│   │   ├── tmdb_service.py   # TMDB API 封装
+│   │   └── douban_service.py # 豆瓣 Top 250 爬虫
 │   ├── api/                 # API 蓝图
 │   │   ├── movies.py
 │   │   ├── stats.py
 │   │   └── health.py
-│   └── tests/               # pytest 测试
+│   └── tests/               # pytest 测试（16 条）
 └── frontend/
     ├── src/
     │   ├── App.vue          # 根组件（侧边栏 + 路由视图）
@@ -159,7 +162,7 @@ pytest tests/ -v
 
 ## 📄 数据来源
 
-电影数据来自 [TMDB](https://www.themoviedb.org/) API。本项目仅用于学习与作品展示目的。
+电影数据来自 [TMDB](https://www.themoviedb.org/) API 和 [豆瓣 Top 250](https://movie.douban.com/top250)。本项目仅用于学习与作品展示目的。
 
 ## 📝 License
 
