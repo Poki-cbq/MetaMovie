@@ -16,6 +16,10 @@
         <el-icon><DataAnalysis /></el-icon>
         <span>数据分析</span>
       </el-menu-item>
+      <el-menu-item index="/favorites">
+        <el-icon><Star /></el-icon>
+        <span>我的收藏</span>
+      </el-menu-item>
     </el-menu>
   </div>
 
@@ -34,7 +38,7 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
-import { Search, DataAnalysis } from "@element-plus/icons-vue";
+import { Search, DataAnalysis, Star } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const activeMenu = computed(() => {

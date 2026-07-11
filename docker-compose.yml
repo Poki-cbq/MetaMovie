@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  # ===========================================================================
+  # Flask 后端 API
+  # ===========================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: metamovie-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - metamovie_data:/app/data
+    env_file:
+      - backend/.env
+    environment:
+      - DATABASE_URL=sqlite:///data/movies.db
+      - FLASK_DEBUG=0
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Nginx 前端（Vue 3 SPA）
+  # ===========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: metamovie-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  metamovie_data:
+    driver: local

@@ -47,6 +47,8 @@ def create_app(config_class=Config):
 
 
 if __name__ == "__main__":
+    from config import validate_tmdb_key
+    validate_tmdb_key()
     app = create_app()
     debug = os.getenv("FLASK_DEBUG", "0") == "1"
     app.run(host="0.0.0.0", port=5000, debug=debug)

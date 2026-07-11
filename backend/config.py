@@ -1,7 +1,26 @@
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def validate_tmdb_key():
+    """启动校验：TMDB_API_KEY 未配置时打印错误并退出。
+
+    用法：在 create_app() 中调用，或在 seed.py 中调用。
+    """
+    key = os.getenv("TMDB_API_KEY", "").strip()
+    if not key or key == "your_api_key_here":
+        print("=" * 60)
+        print("  ⚠️  错误：TMDB_API_KEY 未配置！")
+        print()
+        print("  请按照以下步骤设置：")
+        print("  1. 前往 https://www.themoviedb.org/settings/api 申请 API Key")
+        print("  2. 复制 backend/.env.example → backend/.env")
+        print("  3. 在 .env 中填写 TMDB_API_KEY=你的key")
+        print("=" * 60)
+        sys.exit(1)
 
 
 class Config:

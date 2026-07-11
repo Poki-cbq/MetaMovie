@@ -43,6 +43,7 @@
         <div class="info-section">
           <h1 class="movie-title">
             {{ movie.title }}
+            <FavoriteButton :movie-id="movie.id" size="large" style="margin-left:8px;vertical-align:middle" />
             <el-tag
               size="small"
               :type="movie.source === 'douban' ? 'success' : ''"
@@ -163,6 +164,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ArrowLeft, VideoCamera, User } from "@element-plus/icons-vue";
 import { fetchMovieDetail } from "../api";
 import { getPosterUrl, getProfileUrl, toStarRating, formatRuntime, formatMoney } from "../utils/movie";
+import FavoriteButton from "../components/FavoriteButton.vue";
 
 const route = useRoute();
 const router = useRouter();

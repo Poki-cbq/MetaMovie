@@ -64,6 +64,22 @@
           <div ref="yearChartRef" class="chart-body"></div>
         </div>
         <div class="chart-card">
+          <div class="chart-header">预算 × 票房</div>
+          <div ref="budgetRevChartRef" class="chart-body"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">片长分布</div>
+          <div ref="runtimeChartRef" class="chart-body"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">国家 / 地区排行</div>
+          <div ref="countryChartRef" class="chart-body"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">评分 × 热度</div>
+          <div ref="ratingPopChartRef" class="chart-body"></div>
+        </div>
+        <div class="chart-card">
           <div class="chart-header">数据来源</div>
           <div ref="sourceChartRef" class="chart-body"></div>
         </div>
@@ -76,6 +92,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
 import { fetchStats } from "../api";
+import { formatMoney } from "../utils/movie";
 
 // ---------------------------------------------------------------------------
 // 数据
@@ -88,11 +105,19 @@ const ratingChartRef = ref(null);
 const genreChartRef = ref(null);
 const yearChartRef = ref(null);
 const sourceChartRef = ref(null);
+const budgetRevChartRef = ref(null);
+const runtimeChartRef = ref(null);
+const countryChartRef = ref(null);
+const ratingPopChartRef = ref(null);
 
 let ratingChart = null;
 let genreChart = null;
 let yearChart = null;
 let sourceChart = null;
+let budgetRevChart = null;
+let runtimeChart = null;
+let countryChart = null;
+let ratingPopChart = null;
 
 // 数据来源统计
 const tmdbCount = computed(() => {
@@ -218,6 +243,198 @@ function buildSourceChart(data) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// 新增 4 个图表
+// ---------------------------------------------------------------------------
+
+function buildBudgetRevenueChart(data) {
+  if (!budgetRevChart || !data?.length) return;
+
+  // 计算对角线范围
+  const maxVal = Math.max(
+    ...data.map((d) => Math.max(d.budget, d.revenue))
+  );
+
+  budgetRevChart.setOption({
+    tooltip: {
+      trigger: "item",
+      formatter: (p) => {
+        const d = data[p.dataIndex];
+        return `<b>${d.title}</b><br/>预算 ${formatMoney(d.budget)}<br/>票房 ${formatMoney(d.revenue)}`;
+      },
+    },
+    xAxis: {
+      type: "value",
+      name: "预算 (USD)",
+      nameLocation: "middle",
+      nameGap: 30,
+      axisLabel: { formatter: (v) => (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${Math.round(v / 1e6)}M`) },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+    },
+    yAxis: {
+      type: "value",
+      name: "票房 (USD)",
+      axisLabel: { formatter: (v) => (v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${Math.round(v / 1e6)}M`) },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+    },
+    series: [
+      // 对角线（回本线）
+      {
+        type: "line",
+        markLine: {
+          silent: true,
+          symbol: "none",
+          lineStyle: { color: "rgba(255,255,255,0.2)", type: "dashed" },
+          data: [
+            [
+              { coord: [0, 0] },
+              { coord: [maxVal, maxVal] },
+            ],
+          ],
+        },
+      },
+      // 散点
+      {
+        type: "scatter",
+        data: data.map((d) => [d.budget, d.revenue]),
+        symbolSize: 8,
+        itemStyle: {
+          color: new echarts.graphic.RadialGradient(0.4, 0.3, 1, [
+            { offset: 0, color: "#01b4e4" },
+            { offset: 1, color: "#0d253f" },
+          ]),
+          borderColor: "rgba(1,180,228,0.4)",
+          borderWidth: 1,
+        },
+        emphasis: {
+          itemStyle: { borderWidth: 2, borderColor: "#f9ca24" },
+          scale: 1.5,
+        },
+      },
+    ],
+    grid: { top: 20, right: 50, bottom: 50, left: 70 },
+  });
+}
+
+function buildRuntimeChart(data) {
+  if (!runtimeChart || !data?.length) return;
+  runtimeChart.setOption({
+    tooltip: {
+      trigger: "axis",
+      formatter: (p) => `${p[0].axisValue}<br/>${p[0].value} 部`,
+    },
+    xAxis: {
+      type: "category",
+      data: data.map((d) => d.range),
+      axisLabel: { rotate: 0, interval: 1, fontSize: 10 },
+    },
+    yAxis: {
+      type: "value",
+      name: "电影数",
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+    },
+    series: [
+      {
+        type: "bar",
+        data: data.map((d) => d.count),
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: "#d2d531" },
+            { offset: 1, color: "#0d253f" },
+          ]),
+          borderRadius: [4, 4, 0, 0],
+        },
+        barMaxWidth: 30,
+      },
+    ],
+    grid: { top: 20, right: 20, bottom: 50, left: 50 },
+  });
+}
+
+function buildCountryChart(data) {
+  if (!countryChart || !data?.length) return;
+  // 反转使排行从上到下
+  const reversed = [...data].reverse();
+  countryChart.setOption({
+    tooltip: {
+      trigger: "axis",
+      formatter: (p) => `${p[0].name}<br/>${p[0].value} 部`,
+    },
+    xAxis: {
+      type: "value",
+      name: "电影数",
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+    },
+    yAxis: {
+      type: "category",
+      data: reversed.map((d) => d.name),
+      axisLabel: { fontSize: 11 },
+    },
+    series: [
+      {
+        type: "bar",
+        data: reversed.map((d) => d.count),
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: "#0d253f" },
+            { offset: 1, color: "#90cea1" },
+          ]),
+          borderRadius: [0, 4, 4, 0],
+        },
+        barMaxWidth: 20,
+      },
+    ],
+    grid: { top: 10, right: 20, bottom: 20, left: 80 },
+  });
+}
+
+function buildRatingPopularityChart(data) {
+  if (!ratingPopChart || !data?.length) return;
+  ratingPopChart.setOption({
+    tooltip: {
+      trigger: "item",
+      formatter: (p) => {
+        const d = data[p.dataIndex];
+        return `<b>${d.title}</b><br/>评分 ${d.vote_average}<br/>热度 ${d.popularity.toFixed(1)}`;
+      },
+    },
+    xAxis: {
+      type: "value",
+      name: "评分",
+      nameLocation: "middle",
+      nameGap: 30,
+      min: 0,
+      max: 10,
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+    },
+    yAxis: {
+      type: "value",
+      name: "热度",
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+    },
+    series: [
+      {
+        type: "scatter",
+        data: data.map((d) => [d.vote_average, d.popularity]),
+        symbolSize: 7,
+        itemStyle: {
+          color: new echarts.graphic.RadialGradient(0.4, 0.3, 1, [
+            { offset: 0, color: "#21d07a" },
+            { offset: 1, color: "#0d253f" },
+          ]),
+          borderColor: "rgba(33,208,122,0.4)",
+          borderWidth: 1,
+        },
+        emphasis: {
+          itemStyle: { borderWidth: 2, borderColor: "#f9ca24" },
+          scale: 1.5,
+        },
+      },
+    ],
+    grid: { top: 20, right: 30, bottom: 50, left: 60 },
+  });
+}
+
 function buildYearChart(data) {
   if (!yearChart || !data?.length) return;
   yearChart.setOption({
@@ -302,20 +519,29 @@ async function loadStats() {
 function initCharts() {
   if (!stats.value) return;
 
-  if (ratingChart) ratingChart.dispose();
-  if (genreChart) genreChart.dispose();
-  if (yearChart) yearChart.dispose();
-  if (sourceChart) sourceChart.dispose();
+  // 销毁旧图表
+  [
+    ratingChart, genreChart, yearChart, sourceChart,
+    budgetRevChart, runtimeChart, countryChart, ratingPopChart,
+  ].forEach((c) => c?.dispose());
 
   ratingChart = makeChart(ratingChartRef.value);
   genreChart = makeChart(genreChartRef.value);
   yearChart = makeChart(yearChartRef.value);
   sourceChart = makeChart(sourceChartRef.value);
+  budgetRevChart = makeChart(budgetRevChartRef.value);
+  runtimeChart = makeChart(runtimeChartRef.value);
+  countryChart = makeChart(countryChartRef.value);
+  ratingPopChart = makeChart(ratingPopChartRef.value);
 
   buildGenreChart(stats.value.genre_distribution);
   buildYearChart(stats.value.yearly_trend);
   buildRatingChart(stats.value.rating_distribution);
   buildSourceChart(stats.value.source_distribution);
+  buildBudgetRevenueChart(stats.value.budget_revenue);
+  buildRuntimeChart(stats.value.runtime_distribution);
+  buildCountryChart(stats.value.country_top15);
+  buildRatingPopularityChart(stats.value.rating_popularity);
 }
 
 function handleResize() {
@@ -323,6 +549,10 @@ function handleResize() {
   genreChart?.resize();
   yearChart?.resize();
   sourceChart?.resize();
+  budgetRevChart?.resize();
+  runtimeChart?.resize();
+  countryChart?.resize();
+  ratingPopChart?.resize();
 }
 
 // ---------------------------------------------------------------------------
@@ -335,10 +565,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
-  ratingChart?.dispose();
-  genreChart?.dispose();
-  yearChart?.dispose();
-  sourceChart?.dispose();
+  [
+    ratingChart, genreChart, yearChart, sourceChart,
+    budgetRevChart, runtimeChart, countryChart, ratingPopChart,
+  ].forEach((c) => c?.dispose());
 });
 </script>
 

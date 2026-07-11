@@ -104,7 +104,10 @@
           </div>
 
           <div class="card-info">
-            <div class="card-title">{{ movie.title }}</div>
+            <div class="card-header">
+              <div class="card-title">{{ movie.title }}</div>
+              <FavoriteButton :movie-id="movie.id" />
+            </div>
             <div class="card-rating">
               <el-rate
                 :model-value="toStarRating(movie.vote_average)"
@@ -168,6 +171,7 @@ import { useRouter } from "vue-router";
 import { Search, SortUp, SortDown, VideoCamera } from "@element-plus/icons-vue";
 import { fetchMovies, fetchGenres, fetchYears, fetchCountries } from "../api";
 import { getPosterUrl, toStarRating } from "../utils/movie";
+import FavoriteButton from "../components/FavoriteButton.vue";
 
 const router = useRouter();
 
@@ -354,13 +358,21 @@ onMounted(() => {
   padding: 10px 12px 14px;
 }
 
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .card-title {
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 6px;
+  flex: 1;
 }
 
 .card-rating {

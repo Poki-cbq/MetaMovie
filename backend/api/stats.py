@@ -115,6 +115,80 @@ def get_stats():
     ]
 
     # ------------------------------------------------------------------
+    # 5. 预算 vs 票房散点图数据
+    # ------------------------------------------------------------------
+    br_rows = (
+        Movie.query.with_entities(
+            Movie.title, Movie.budget, Movie.revenue
+        )
+        .filter(Movie.budget > 0, Movie.revenue > 0)
+        .order_by(Movie.budget.desc())
+        .limit(200)
+        .all()
+    )
+    budget_revenue = [
+        {"title": row.title, "budget": row.budget, "revenue": row.revenue}
+        for row in br_rows
+    ]
+
+    # ------------------------------------------------------------------
+    # 6. 片长分布（每 30 分钟一个桶）
+    # ------------------------------------------------------------------
+    runtime_rows = (
+        Movie.query.with_entities(Movie.runtime)
+        .filter(Movie.runtime > 0, Movie.runtime <= 300)
+        .all()
+    )
+    runtime_buckets = defaultdict(int)
+    for (rt,) in runtime_rows:
+        bucket = (rt // 30) * 30  # 0, 30, 60, 90, ...
+        label = f"{bucket}-{bucket + 29}min"
+        runtime_buckets[label] += 1
+    runtime_distribution = [
+        {"range": k, "count": v}
+        for k, v in sorted(
+            runtime_buckets.items(),
+            key=lambda x: int(x[0].split("-")[0])
+        )
+    ]
+
+    # ------------------------------------------------------------------
+    # 7. 评分 vs 热度散点图数据
+    # ------------------------------------------------------------------
+    rp_rows = (
+        Movie.query.with_entities(
+            Movie.title, Movie.vote_average, Movie.popularity
+        )
+        .filter(Movie.vote_average > 0, Movie.popularity > 0)
+        .order_by(Movie.popularity.desc())
+        .limit(200)
+        .all()
+    )
+    rating_popularity = [
+        {"title": row.title, "vote_average": float(row.vote_average), "popularity": float(row.popularity)}
+        for row in rp_rows
+    ]
+
+    # ------------------------------------------------------------------
+    # 8. 国家/地区产量 Top 15
+    # ------------------------------------------------------------------
+    all_movies_countries = Movie.query.with_entities(
+        Movie.production_countries
+    ).all()
+    country_counter = Counter()
+    for (cs,) in all_movies_countries:
+        if not cs:
+            continue
+        for c in cs.split(","):
+            c = c.strip()
+            if c:
+                country_counter[c] += 1
+    country_top15 = [
+        {"name": name, "count": count}
+        for name, count in country_counter.most_common(15)
+    ]
+
+    # ------------------------------------------------------------------
     # 组装响应
     # ------------------------------------------------------------------
     return jsonify(
@@ -126,6 +200,10 @@ def get_stats():
                 "genre_distribution": genre_distribution,
                 "yearly_trend": yearly_trend,
                 "source_distribution": source_distribution,
+                "budget_revenue": budget_revenue,
+                "runtime_distribution": runtime_distribution,
+                "rating_popularity": rating_popularity,
+                "country_top15": country_top15,
             }
         }
     )
