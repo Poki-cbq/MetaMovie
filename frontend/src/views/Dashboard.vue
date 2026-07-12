@@ -161,7 +161,7 @@ function buildRatingChart(data) {
         },
       },
     ],
-    grid: { top: 20, right: 20, bottom: 40, left: 50 },
+    grid: { top: 40, right: 20, bottom: 40, left: 60 },
   });
 }
 
@@ -263,7 +263,7 @@ function buildBudgetRevenueChart(data) {
         },
       },
     ],
-    grid: { top: 20, right: 50, bottom: 50, left: 70 },
+    grid: { top: 50, right: 50, bottom: 50, left: 80 },
   });
 }
 
@@ -298,7 +298,7 @@ function buildRuntimeChart(data) {
         barMaxWidth: 30,
       },
     ],
-    grid: { top: 20, right: 20, bottom: 50, left: 50 },
+    grid: { top: 40, right: 20, bottom: 50, left: 60 },
   });
 }
 
@@ -382,7 +382,7 @@ function buildRatingPopularityChart(data) {
         },
       },
     ],
-    grid: { top: 20, right: 30, bottom: 50, left: 60 },
+    grid: { top: 40, right: 30, bottom: 50, left: 70 },
   });
 }
 
@@ -440,7 +440,7 @@ function buildYearChart(data) {
         itemStyle: { color: "#f9ca24" },
       },
     ],
-    grid: { top: 20, right: 50, bottom: 40, left: 50 },
+    grid: { top: 40, right: 60, bottom: 40, left: 60 },
     legend: {
       data: ["电影数", "均分"],
       bottom: 0,
