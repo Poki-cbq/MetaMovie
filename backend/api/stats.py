@@ -5,7 +5,6 @@ from collections import Counter, defaultdict
 from flask import Blueprint, jsonify
 from sqlalchemy import func
 
-from app import cache
 from models import db
 from models.database import Movie
 
@@ -13,7 +12,6 @@ stats_bp = Blueprint("stats", __name__)
 
 
 @stats_bp.route("/api/stats", methods=["GET"])
-@cache.cached(timeout=600)
 def get_stats():
     """Dashboard 汇总数据：总数、均分、评分分布、类型分布、年代趋势。"""
 

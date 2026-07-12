@@ -1,4 +1,4 @@
-"""pytest fixtures：内存 SQLite + 3 部种子电影 + 演职人员"""
+"""pytest fixtures：内存 SQLite + 3 部种子电影 + 演职人员（全部 TMDB 数据源）"""
 
 import pytest
 
@@ -82,23 +82,7 @@ def seed_data(app):
             genres="动作,犯罪,剧情",
             production_countries="美国",
         )
-        m4 = Movie(
-            source="douban",
-            tmdb_id=None,
-            douban_id=1292052,
-            douban_rating=9.7,
-            title="肖申克的救赎",
-            original_title="The Shawshank Redemption",
-            overview="希望让人自由。",
-            release_date="1994-01-01",
-            runtime=142,
-            vote_average=9.7,
-            vote_count=2500000,
-            popularity=0.0,
-            genres="剧情,犯罪",
-            production_countries="美国",
-        )
-        db.session.add_all([m1, m2, m3, m4])
+        db.session.add_all([m1, m2, m3])
         db.session.flush()  # 拿到自增 id
 
         # -- 演职人员 ------------------------------------------------------
@@ -124,4 +108,4 @@ def seed_data(app):
         db.session.add_all(credits)
         db.session.commit()
 
-    return [m1, m2, m3, m4]
+    return [m1, m2, m3]

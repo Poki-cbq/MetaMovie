@@ -6,7 +6,6 @@ from collections import Counter
 from flask import Blueprint, abort, jsonify, request
 from sqlalchemy import or_
 
-from app import cache
 from models import db
 from models.database import Movie, Credit
 
@@ -171,7 +170,6 @@ def get_movie_detail(movie_id):
 # GET /api/genres  —  类型列表 + 每类数量
 # ===================================================================
 @movies_bp.route("/api/genres", methods=["GET"])
-@cache.cached(timeout=600)
 def get_genres():
     """获取所有电影类型及各自数量。"""
     rows = Movie.query.with_entities(Movie.genres).all()
@@ -197,7 +195,6 @@ def get_genres():
 # GET /api/years  —  年份列表 + 每年数量
 # ===================================================================
 @movies_bp.route("/api/years", methods=["GET"])
-@cache.cached(timeout=600)
 def get_years():
     """获取所有上映年份及各自数量。"""
     rows = Movie.query.with_entities(Movie.release_date).all()
@@ -221,7 +218,6 @@ def get_years():
 # GET /api/countries  —  国家列表 + 每国数量
 # ===================================================================
 @movies_bp.route("/api/countries", methods=["GET"])
-@cache.cached(timeout=600)
 def get_countries():
     """获取所有制片国家及各自数量。"""
     rows = Movie.query.with_entities(Movie.production_countries).all()

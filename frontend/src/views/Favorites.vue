@@ -85,13 +85,7 @@
               </el-tag>
             </div>
             <div class="card-source">
-              <el-tag
-                size="small"
-                :type="movie.source === 'douban' ? 'success' : ''"
-                :style="movie.source === 'douban' ? '' : 'background:#01b4e4;border-color:#01b4e4;color:#fff'"
-              >
-                {{ movie.source === 'douban' ? '豆瓣' : 'TMDB' }}
-              </el-tag>
+              <el-tag size="small" style="background:#01b4e4;border-color:#01b4e4;color:#fff">TMDB</el-tag>
             </div>
           </div>
         </div>

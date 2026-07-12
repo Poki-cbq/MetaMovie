@@ -4,16 +4,13 @@
 
 /**
  * 获取海报完整 URL
- * @param {string} path — TMDB 相对路径或豆瓣完整 URL
- * @param {string} source — 'tmdb' | 'douban'
+ * @param {string} path — TMDB 相对路径
+ * @param {string} _ — 保留参数（不再使用）
  * @param {string} size — TMDB 海报尺寸，默认 'w500'
  * @returns {string}
  */
-export function getPosterUrl(path, source, size = "w500") {
+export function getPosterUrl(path, _source, size = "w500") {
   if (!path) return "";
-  // 豆瓣数据存的是完整 URL，直接返回
-  if (source === "douban" && path.startsWith("http")) return path;
-  // TMDB 数据拼接 CDN URL
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 

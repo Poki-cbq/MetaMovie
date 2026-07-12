@@ -35,16 +35,9 @@ describe("getPosterUrl", () => {
     expect(result).toBe("https://image.tmdb.org/t/p/w185/poster.jpg");
   });
 
-  it("豆瓣完整 URL 直接返回", () => {
-    const doubanUrl = "https://img1.doubanio.com/view/photo/xxx.jpg";
-    const result = getPosterUrl(doubanUrl, "douban");
-    expect(result).toBe(doubanUrl);
-  });
-
-  it("豆瓣 HTTP 开头的任意 URL 直接返回", () => {
-    const url = "http://example.com/img.jpg";
-    const result = getPosterUrl(url, "douban");
-    expect(result).toBe(url);
+  it("任何路径都按 TMDB CDN 格式拼接", () => {
+    const result = getPosterUrl("/abc.jpg", "tmdb", "original");
+    expect(result).toBe("https://image.tmdb.org/t/p/original/abc.jpg");
   });
 });
 

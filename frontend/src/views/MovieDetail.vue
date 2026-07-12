@@ -46,10 +46,9 @@
             <FavoriteButton :movie-id="movie.id" size="large" style="margin-left:8px;vertical-align:middle" />
             <el-tag
               size="small"
-              :type="movie.source === 'douban' ? 'success' : ''"
-              :style="movie.source === 'douban' ? 'margin-left:8px' : 'margin-left:8px;background:#01b4e4;border-color:#01b4e4;color:#fff'"
+              style="margin-left:8px;background:#01b4e4;border-color:#01b4e4;color:#fff"
             >
-              {{ movie.source === 'douban' ? '豆瓣' : 'TMDB' }}
+              TMDB
             </el-tag>
             <span class="original-title" v-if="movie.original_title && movie.original_title !== movie.title">
               {{ movie.original_title }}
@@ -74,9 +73,6 @@
               class="rating-number"
             >
               {{ movie.vote_average?.toFixed(1) }} / 10
-            </span>
-            <span v-if="movie.source === 'douban' && movie.douban_rating" class="douban-rating">
-              豆瓣 {{ movie.douban_rating }}
             </span>
             <span class="vote-count">{{ movie.vote_count?.toLocaleString() }} 票</span>
           </div>
@@ -149,9 +145,8 @@
             </el-table-column>
           </el-table>
         </template>
-        <template v-else-if="movie.source === 'douban'">
-          <h3>演职表</h3>
-          <p class="no-credits">暂无演职人员数据（豆瓣数据源）</p>
+        <template v-else-if="false">
+          <!-- 保留占位，确保 v-if / v-else-if 结构完整 -->
         </template>
       </div>
     </template>
